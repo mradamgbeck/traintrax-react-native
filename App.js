@@ -5,26 +5,37 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { Login } from './components/pages/Login.js'
 import { SignUp } from './components/pages/SignUp.js'
 import { Home } from './components/pages/Home.js'
+import { darkModeLime } from './constants/styles'
 const Stack = createStackNavigator();
 
 export default function App() {
 
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName={"Login"}>
+      <Stack.Navigator initialRouteName={"Login"}
+        screenOptions={{
+          headerStyle: darkModeLime.header,
+          headerTitleStyle: darkModeLime.headerTitle,
+        }}>
         <Stack.Screen
           name="Login"
           component={Login}
-          options={{ title: 'Login' }}
+          options={{
+            title: 'Login',
+          }}
         />
         <Stack.Screen
           name="SignUp"
           component={SignUp}
-          options={{ title: 'Sign Up' }} />
+          options={{
+            title: 'Sign Up',
+          }} />
         <Stack.Screen
           name="Home"
           component={Home}
-          options={{ title: 'TrainTrax' }} />
+          options={{
+            title: 'TrainTrax',
+          }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

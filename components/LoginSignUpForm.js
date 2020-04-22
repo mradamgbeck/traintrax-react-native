@@ -1,12 +1,18 @@
 import React, { useState } from 'react';
-import { View, TextInput, Button, Keyboard, Picker } from 'react-native';
+import { AsyncStorage, Text, View, TextInput, Keyboard, Picker } from 'react-native';
+import { herokuUrl } from '../constants/url-constants'
+import { logTrainTraxError } from '../constants/error-messages'
+import { roles } from '../constants/roles'
+import { darkModeLime } from '../constants/styles'
+import { TouchableOpacity } from 'react-native-gesture-handler';
+import { darkModeLimeColors } from '../constants/colors';
 
 export function LoginSignUpForm(props) {
     const { navigation } = props;
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [isLogin, setIsLogin] = useState(props.isLogin);
-    const [role, setRole] = useState("CLIENT");
+    const [role, setRole] = useState(roles.client);
 
     async function saveData() {
         if (!username) {
@@ -16,76 +22,89 @@ export function LoginSignUpForm(props) {
             alert('Please enter a password.');
             return;
         } else {
+            const user = {
+                username: username,
+                password: password,
+                role: role,
+                isEnabled: true
+            };
             if (isLogin) {
-                //call login endpoint with creds
+                loginUser(user);
                 dismissKeyboardAndNavigate('Home', { loggedInUser: username });
             } else {
-                registerUser();
+                registerUser(user);
                 dismissKeyboardAndNavigate('Login');
             }
         }
     }
 
-    function registerUser() {
-        const newUser = {
-            username: username,
-            password: password,
-            role: role,
-            isEnabled: true
-        };
-        fetch('https://jigglejam-traintrax.herokuapp.com/api/user/register', {
+    function loginUser({ username, password }) {
+        fetch(herokuUrl + `/login`, {
             method: 'POST',
             headers: {
                 Accept: 'application/json',
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(newUser)
+            body: JSON.stringify({ username, password })
         })
             .then((response) => {
-                console.log(response)
-                response.json
+                return response.headers.map.authorization
             })
-            .then(json => json)
-            .catch((error) => {
-                console.log("TRAINTRAX ERROR:\n----------------------"
-                    + error)
+            .then(token => {
+                AsyncStorage.setItem('jwt', token)
             })
+            .catch(logTrainTraxError)
     }
+
+    function registerUser(user) {
+        fetch(herokuUrl + `/api/user/register`, {
+            method: 'POST',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(user)
+        })
+            .catch(logTrainTraxError)
+    }
+
     function dismissKeyboardAndNavigate(destination, props) {
         Keyboard.dismiss();
         navigation.navigate(destination, props);
     }
 
     return (
-        <View>
+        <View style={darkModeLime.pageView}>
             <TextInput
+                style={darkModeLime.textInput}
                 onChangeText={(username) => setUsername(username)}
                 placeholder="Username"
-                placeholderTextColor="#000000"
-                selectionColor="#fff"
+                placeholderTextColor={darkModeLimeColors.placeHolderText}
                 keyboardType="email-address">
             </TextInput>
             <TextInput
+                style={darkModeLime.textInput}
                 onChangeText={(password) => setPassword(password)}
-                underlineColorAndroid='rgba(0,0,0,0)'
                 placeholder="Password"
+                placeholderTextColor={darkModeLimeColors.placeHolderText}
                 secureTextEntry={true}
-                placeholderTextColor="#002f6c"
             />
             {isLogin ? null :
                 <Picker
+                    style={darkModeLime.picker}
+                    mode='dropdown'
+                    itemStyle={darkModeLime.pickerItem}
                     selectedValue={role}
-                    style={{ height: 50, width: 150 }}
                     onValueChange={(itemValue, itemIndex) => setRole(itemValue)}
                 >
-                    <Picker.Item label="Trainer" value="TRAINER" />
-                    <Picker.Item label="Client" value="CLIENT" />
+                    <Picker.Item label="Trainer" value={roles.trainer} />
+                    <Picker.Item label="Client" value={roles.client} />
                 </Picker>}
-            <Button
-                title={isLogin ? 'Login' : 'Sign Up'}
+            <TouchableOpacity
+                style={darkModeLime.button}
                 onPress={saveData}>
-            </Button>
+                <Text style={darkModeLime.buttonText}>{isLogin ? 'Login' : 'Sign Up'}</Text>
+            </TouchableOpacity>
         </View>
     );
-
 }
