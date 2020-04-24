@@ -3,9 +3,9 @@ import { AsyncStorage, Text, View, TextInput, Keyboard, Picker } from 'react-nat
 import { herokuUrl } from '../constants/url-constants'
 import { logTrainTraxError } from '../constants/error-messages'
 import { roles } from '../constants/roles'
-import { darkModeLime } from '../constants/styles'
+import { navyLime } from '../constants/styles'
 import { TouchableOpacity } from 'react-native-gesture-handler';
-import { darkModeLimeColors } from '../constants/colors';
+import { navyLimeColors } from '../constants/colors';
 
 export function LoginSignUpForm(props) {
     const { navigation } = props;
@@ -29,8 +29,13 @@ export function LoginSignUpForm(props) {
                 isEnabled: true
             };
             if (isLogin) {
-                loginUser(user);
-                dismissKeyboardAndNavigate('Home', { loggedInUser: username });
+                loginUserAndSetToken(user);
+                getAndPersistUserData(user.username)
+                if (role === roles.trainer) {
+                    dismissKeyboardAndNavigate('TrainerHome', { loggedInUser: username });
+                } else {
+                    dismissKeyboardAndNavigate('ClientHome', { loggedInUser: username });
+                }
             } else {
                 registerUser(user);
                 dismissKeyboardAndNavigate('Login');
@@ -38,7 +43,7 @@ export function LoginSignUpForm(props) {
         }
     }
 
-    function loginUser({ username, password }) {
+    function loginUserAndSetToken({ username, password }) {
         fetch(herokuUrl + `/login`, {
             method: 'POST',
             headers: {
@@ -48,12 +53,35 @@ export function LoginSignUpForm(props) {
             body: JSON.stringify({ username, password })
         })
             .then((response) => {
-                return response.headers.map.authorization
+                return response.headers
             })
-            .then(token => {
-                AsyncStorage.setItem('jwt', token)
+            .then(headers => {
+                AsyncStorage.setItem('token', headers.map.authorization)
             })
             .catch(logTrainTraxError)
+    }
+
+    function getAndPersistUserData(username) {
+        AsyncStorage.getItem('token')
+            .then(token => {
+                fetch(herokuUrl + `/api/user/blarg/` + username, {
+                    method: 'GET',
+                    headers: {
+                        Accept: 'application/json',
+                        'Content-Type': 'application/json',
+                        'Authorization': token
+                    }
+                })
+                    .then((response) => {
+                        return response.json()
+                    })
+                    .then(json => {
+                        AsyncStorage.setItem('username', json.username)
+                        AsyncStorage.setItem('role', json.role)
+                        setRole(json.role)
+                    })
+                    .catch(logTrainTraxError)
+            })
     }
 
     function registerUser(user) {
@@ -74,26 +102,26 @@ export function LoginSignUpForm(props) {
     }
 
     return (
-        <View style={darkModeLime.pageView}>
+        <View style={navyLime.pageView}>
             <TextInput
-                style={darkModeLime.textInput}
+                style={navyLime.textInput}
                 onChangeText={(username) => setUsername(username)}
                 placeholder="Username"
-                placeholderTextColor={darkModeLimeColors.placeHolderText}
+                placeholderTextColor={navyLimeColors.placeHolderText}
                 keyboardType="email-address">
             </TextInput>
             <TextInput
-                style={darkModeLime.textInput}
+                style={navyLime.textInput}
                 onChangeText={(password) => setPassword(password)}
                 placeholder="Password"
-                placeholderTextColor={darkModeLimeColors.placeHolderText}
+                placeholderTextColor={navyLimeColors.placeHolderText}
                 secureTextEntry={true}
             />
             {isLogin ? null :
                 <Picker
-                    style={darkModeLime.picker}
+                    style={navyLime.picker}
                     mode='dropdown'
-                    itemStyle={darkModeLime.pickerItem}
+                    itemStyle={navyLime.pickerItem}
                     selectedValue={role}
                     onValueChange={(itemValue, itemIndex) => setRole(itemValue)}
                 >
@@ -101,9 +129,9 @@ export function LoginSignUpForm(props) {
                     <Picker.Item label="Client" value={roles.client} />
                 </Picker>}
             <TouchableOpacity
-                style={darkModeLime.button}
+                style={navyLime.button}
                 onPress={saveData}>
-                <Text style={darkModeLime.buttonText}>{isLogin ? 'Login' : 'Sign Up'}</Text>
+                <Text style={navyLime.buttonText}>{isLogin ? 'Login' : 'Sign Up'}</Text>
             </TouchableOpacity>
         </View>
     );

@@ -4,8 +4,9 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Login } from './components/pages/Login.js'
 import { SignUp } from './components/pages/SignUp.js'
-import { Home } from './components/pages/Home.js'
-import { darkModeLime } from './constants/styles'
+import { ClientHome } from './components/pages/ClientHome.js'
+import { TrainerHome } from './components/pages/TrainerHome.js'
+import { navyLime } from './constants/styles'
 const Stack = createStackNavigator();
 
 export default function App() {
@@ -14,8 +15,8 @@ export default function App() {
     <NavigationContainer>
       <Stack.Navigator initialRouteName={"Login"}
         screenOptions={{
-          headerStyle: darkModeLime.header,
-          headerTitleStyle: darkModeLime.headerTitle,
+          headerStyle: navyLime.header,
+          headerTitleStyle: navyLime.headerTitle,
         }}>
         <Stack.Screen
           name="Login"
@@ -31,8 +32,14 @@ export default function App() {
             title: 'Sign Up',
           }} />
         <Stack.Screen
-          name="Home"
-          component={Home}
+          name="TrainerHome"
+          component={TrainerHome}
+          options={{
+            title: 'TrainTrax',
+          }} />
+        <Stack.Screen
+          name="ClientHome"
+          component={ClientHome}
           options={{
             title: 'TrainTrax',
           }} />
